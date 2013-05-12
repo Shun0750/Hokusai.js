@@ -343,9 +343,6 @@ function splitText(label,width){
 	newlabel.lockMovementX = true;
 	newlabel.lockMovementY = true;		
 	
-	 console.log("AAAAA");
-	console.log(newlabel);
-	console.log("AAAAA");
 	 return newlabel;
 	
 }
