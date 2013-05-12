@@ -336,8 +336,13 @@ function splitText(label,width){
 			  zindex:label.zindex,
 			  animation:label.animation
 	});	
-
-	newlabel.set('left',newlabel.left+newlabel.width/2);
+	if(newlabel.textAlign=="right" && label.width<width){
+		newlabel.set('left',newlabel.left+width-newlabel.width/2);
+	}else if(newlabel.textAlign=="center" && label.width<width){
+		newlabel.set('left',newlabel.left+width/2);
+	}else{
+		newlabel.set('left',newlabel.left+newlabel.width/2);
+	}
 	newlabel.set('top',newlabel.top+newlabel.height/2);
 	newlabel.hasControls=false;
 	newlabel.lockMovementX = true;
