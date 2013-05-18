@@ -2,6 +2,8 @@
 var canvas = new fabric.Canvas('canvasspace');
 var objectData =new Array();
 var caimageview=new Array();
+var animationData = new Array();
+var elementData = new Array();
 var currentPageNum=0;
 
 //JSON読み込み================================================
@@ -11,9 +13,11 @@ $.getJSON(url, function(data){
 	
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
 	  objectData = data.slice(0);
+	  console.log("JSON laded:"+objectData);
 	  
 	  	for(var i=0;i<objectData.length;i++){
 		  	if(objectData[i].pageNum==currentPageNum){
+		  		animationData=objectData[i].animation;
 		  		canvas.setHeight(objectData[i].height);
 		  		canvas.setWidth(objectData[i].width);
 			  	makeObjects(objectData[i].data);
@@ -81,7 +85,7 @@ function makeObjects(arr){
 			  ry:arr[i].ry,
 			  width:arr[i].width,
 			  height:arr[i].height,
-			  opacity:arr[i].opacity,
+			  opacity:parseFloat(arr[i].opacity),
 			  fill: arr[i].backgroundColor,
 			  angle: arr[i].angle,
 			  href: arr[i].href,
@@ -105,7 +109,7 @@ function makeObjects(arr){
 			  id:arr[i].id,
 			  left: arr[i].x,
 			  top: arr[i].y,
-			  opacity:arr[i].opacity,
+			  opacity:parseFloat(arr[i].opacity),
 			  fontSize: arr[i].fontSize,
 			  fontFamily: arr[i].fontFamily,
 			  fontStyle: arr[i].fontStyle,
@@ -152,7 +156,7 @@ function imageLoaded(img,arr){
 				  top: arr[i].y+arr[i].height/2,
 				  width:arr[i].width,
 				  height:arr[i].height,
-				  opacity:arr[i].opacity,
+				  opacity:parseFloat(arr[i].opacity),
 				  angle: arr[i].angle,
 				  href: arr[i].href,
 				  zindex:arr[i].zindex,
@@ -178,12 +182,7 @@ function imageLoaded(img,arr){
 canvas.on('object:added', function(e) {
   //アニメーション
   var obj = e.target;
-  console.log("selected");
-console.log(obj);
-  	if(obj.animation){
-  		var ani=obj.animation;
-  		startAnimation(obj,"added");
-  	}
+  startAnimation(obj.id,"added");
 });
 
 //タッチ
@@ -203,64 +202,64 @@ canvas.on('object:selected', function(e) {
 		  		canvas.setWidth(objectData[i].width);
 			  	makeObjects(objectData[i].data);
 		  	}
-	  	}
-	  	
-  	}
+	  	}	
+    }
   }
 
   //アニメーション
-console.log("selected");
-console.log(obj);
-  	if(obj.animation){
-  		var ani=obj.animation;
-  		  console.log("selected");
-  		startAnimation(obj,"selected");
-  	}
-
+  startAnimation(obj.id,"selected");
+  		
 });
 
 //マウスオーバー
 canvas.on('object:over', function(e) {
-  //アニメーション
-  var obj = e.target;
-  obj.animate('angle', 90, {
-				onChange: canvas.renderAll.bind(canvas)
-  });
-});
+	  //アニメーション
+	  var obj = e.target;
+ });
 
 //アニメーションツール=================================================
 //アニメーションの実行
-function startAnimation(obj,str){
-	  	//アニメーション
-  	if(obj.animation){
-  	var ani=obj.animation;
-  	  	if(ani.triggar==str){
-	  		if(ani.target=='self' || ani.target=='' || ani.target==null){
-			  	obj.animate(ani.element, ani.value, {
-							onChange: canvas.renderAll.bind(canvas),
-							duration: ani.duration,
-					//		easing: fabric.util.ease.easeOutBounce
-				});
-			}else{
-				var arr=canvas._objects;
-				
-				for(var i=0;i<arr.length;i++){
-					if(arr[i].id==ani.target){
-					  	arr[i].animate(ani.element, ani.value, {
-									onChange: canvas.renderAll.bind(canvas),
-									duration: ani.duration,
-							//		easing: fabric.util.ease.easeOutBounce
-						});						
-							  	console.log('>>>>>>>>>');
-	  	console.log(obj.animation);
-	  	console.log(str);
-	  	console.log('>>>>>>>>>');
-
-					}//end of arr[i].id==ani.target
-				}//end of for(var i=0;i<arr.length;i++){
-			}//end of ani.target=='self' || ani.target=='' || ani.target==null
-		}//end of ani.triggar==str
-	 }//end of if(obj.animation)
+function startAnimation(objid,triggerstr){
+	//アニメーション
+	console.log('animation'+objid+triggerstr);
+	for(var i=0;i<animationData.length;i++){
+		if(animationData[i].target==objid && animationData[i].trigger==triggerstr && getObjectById(objid)!=null){
+			var obj=getObjectById(objid);
+			var ani=animationData[i];
+			var tr=0;
+			
+			
+		  	obj.animate(ani.element, ani.value, {
+  				onChange: function(value) {
+				   if(tr==0){
+					  for(var j=0;j<animationData.length;j++){
+					  	 var tmptrg=animationData[j].trigger;
+				      	 var trgarr=tmptrg.split(":");
+				      	 console.log(trgarr);
+				      	 if(trgarr[0]=="sync" && trgarr[1]==ani.aniid){
+				      	 	console.log(animationData[j].target+animationData[j].trigger);
+				      		startAnimation(animationData[j].target,animationData[j].trigger);
+				      	  }
+				      }
+				      tr=1;
+			      }
+			      canvas.renderAll();
+			    },
+			    onComplete: function() {
+					  for(var j=0;j<animationData.length;j++){
+					  	 var tmptrg=animationData[j].trigger;
+				      	 var trgarr=tmptrg.split(":");
+				      	 console.log(ani);
+				      	 if(trgarr[0]=="ended" && trgarr[1]==ani.aniid){
+				      	 	console.log(animationData[j].target+animationData[j].trigger);
+				      		startAnimation(animationData[j].target,animationData[j].trigger);
+				      	  }
+				      }
+				},
+				duration: ani.duration
+			});
+		}
+	}
 }
 //=============================================================
 
@@ -276,6 +275,17 @@ function setLayers(){
 		 }
 	   }
 	}
+}
+
+//idからオブジェクトを取得
+function getObjectById(id){
+	var arr=canvas._objects;
+	for(var i=0;i<arr.length;i++){
+		if(arr[i].id==id){
+			return arr[i];
+		}
+	}
+	return null;
 }
 
 //文字を改行
