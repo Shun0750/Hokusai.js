@@ -3,26 +3,28 @@ var canvas = new fabric.Canvas('canvasspace');
 var objectData =new Array();
 var caimageview=new Array();
 var animationData = new Array();
+var animationStatus = new Array(); //0:アニメーションしていない 1:アニメーション中 2:アニメーション終了済み
 var elementData = new Array();
 var currentPageNum=0;
+var clicking=0;
+var hit=0;
+canvas.selection = false; //グループ選択を解除
+
+setInterval(function(){timer()},20); //タイマー関数の発動
+var animationing=0;
+
+$("#ccon").mousemove(function(event){
+   canvas.renderAll();
+}); 
+
 
 //JSON読み込み================================================
 var url = 'sample.json';
 
 $.getJSON(url, function(data){
-	
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
 	  objectData = data.slice(0);
-	  console.log("JSON laded:"+objectData);
-	  
-	  	for(var i=0;i<objectData.length;i++){
-		  	if(objectData[i].pageNum==currentPageNum){
-		  		animationData=objectData[i].animation;
-		  		canvas.setHeight(objectData[i].height);
-		  		canvas.setWidth(objectData[i].width);
-			  	makeObjects(objectData[i].data);
-		  	}
-	  	}
+	  makePage();
 });
 //クラス宣言==================================================
 var CAView = fabric.util.createClass(fabric.Rect, {
@@ -57,15 +59,13 @@ var CALabel = fabric.util.createClass(fabric.Text, {
 			    this.set('textAlign', options.textAlign || 'left');
 			    this.set('fontFamily', options.fontFamily || 'Hoefler Text');
 	    		}
-		
 });
 
 //オブジェクト生成==============================================
 
 function makeObjects(arr){
 	canvas.clear();
-      	
-	caimageview=[];
+    caimageview=[];
 	//それぞれのオブジェクト配列の生成
 	for(var i=0;i<arr.length;i++){
 		if(arr[i].type=="CAImageView"){
@@ -97,7 +97,6 @@ function makeObjects(arr){
 			newview.lockMovementY = true;
 			canvas.add(newview);
 		}// end of arr[i].type=="CAView"
-		console.log(arr[i].text);
 		//CALabelの描画
 		if(arr[i].type=="CALabel"){
 			var labelwidth=10000;
@@ -170,100 +169,107 @@ function imageLoaded(img,arr){
 			newimageview.lockMovementX = true;
 			newimageview.lockMovementY = true;
 			canvas.add(newimageview);
-		//	canvas.sendBackwards(newimageview); //trash
 			setLayers();
 	}
 }
 //====================================
 
-//イベント==============================================
-//イベントキャッチ==========================
+//イベント===========================================================================================
+//イベントキャッチ==========================================================================
 //追加時
 canvas.on('object:added', function(e) {
   //アニメーション
   var obj = e.target;
-  startAnimation(obj.id,"added");
+  if(getAniidByAddedId(obj.id)!=null){
+	  startAnimation(getAniidByAddedId(obj.id));
+  }
 });
 
 //タッチ
-canvas.on('object:selected', function(e) {
-  //リンク処理
-  var obj = e.target;
+$("#EventCatcher").mousedown(function(event){
+console.log("eventcatch");
+			var objarr=canvas._objects;
+		  	for(var i=0;i<objarr.length;i++){
+			  	if(event.pageX>objarr[i].left-objarr[i].width/2 && event.pageX<objarr[i].left+objarr[i].width/2 && event.pageY>objarr[i].top-objarr[i].height/2 && event.pageY<objarr[i].top+objarr[i].height/2){   
+			  		SelectedEvent(objarr[i]);
+				}
+					  	
+			}
+});
+
+function SelectedEvent(obj) {
   var link=obj.href;
   if(link!=''){
+  clicking=0;
+  //別URLへのリンク
   	if(link.indexOf("http")==0){
   		var w=window.open();
 		w.location.href=obj.href;
   	}else{
+  	    //別ページへの移動
 	  	currentPageNum=parseInt(obj.href);
-	  	for(var i=0;i<objectData.length;i++){
-		  	if(objectData[i].pageNum==currentPageNum){
-		  		canvas.setHeight(objectData[i].height);
-		  		canvas.setWidth(objectData[i].width);
-			  	makeObjects(objectData[i].data);
-		  	}
-	  	}	
+	  	makePage(); //ページの生成
     }
   }
 
   //アニメーション
-  startAnimation(obj.id,"selected");
-  		
-});
+  if(getAniidBySelectedId(obj.id)!=null){
+  	startAnimation(getAniidBySelectedId(obj.id));
+  }		
+};
 
-//マウスオーバー
-canvas.on('object:over', function(e) {
-	  //アニメーション
-	  var obj = e.target;
- });
-
-//アニメーションツール=================================================
+//アニメーションツール=================================================================================================
 //アニメーションの実行
-function startAnimation(objid,triggerstr){
+function startAnimation(aniid){
 	//アニメーション
-	console.log('animation'+objid+triggerstr);
-	for(var i=0;i<animationData.length;i++){
-		if(animationData[i].target==objid && animationData[i].trigger==triggerstr && getObjectById(objid)!=null){
-			var obj=getObjectById(objid);
-			var ani=animationData[i];
-			var tr=0;
-			
-			
-		  	obj.animate(ani.element, ani.value, {
-  				onChange: function(value) {
-				   if(tr==0){
-					  for(var j=0;j<animationData.length;j++){
-					  	 var tmptrg=animationData[j].trigger;
-				      	 var trgarr=tmptrg.split(":");
-				      	 console.log(trgarr);
-				      	 if(trgarr[0]=="sync" && trgarr[1]==ani.aniid){
-				      	 	console.log(animationData[j].target+animationData[j].trigger);
-				      		startAnimation(animationData[j].target,animationData[j].trigger);
-				      	  }
-				      }
-				      tr=1;
-			      }
-			      canvas.renderAll();
-			    },
-			    onComplete: function() {
-					  for(var j=0;j<animationData.length;j++){
-					  	 var tmptrg=animationData[j].trigger;
-				      	 var trgarr=tmptrg.split(":");
-				      	 console.log(ani);
-				      	 if(trgarr[0]=="ended" && trgarr[1]==ani.aniid){
-				      	 	console.log(animationData[j].target+animationData[j].trigger);
-				      		startAnimation(animationData[j].target,animationData[j].trigger);
-				      	  }
-				      }
-				},
-				duration: ani.duration
-			});
-		}
-	}
+	var check2=0;
+	var ani=getAnimationById(aniid);
+	var targetstr=ani.target;
+	var obj=getObjectById(targetstr);
+	obj.animate(ani.element, ani.value, {
+  		onChange: function(value) {
+  			if(animationing==0){animationing=1;}
+  			animationStatus[ani.aniid]=1;
+		},
+		onComplete: function() {
+			animationing=0;
+			animationStatus[ani.aniid]=2;
+		},
+		easing: fabric.util.ease[ani.easing],
+		duration: ani.duration
+	});
 }
 //=============================================================
 
-//ツール==============================================
+
+//タイマー関数===============================================================================================================
+function timer()
+{
+	//アニメーションのレンダリング
+	if(animationing==1){
+		canvas.renderAll();
+	}
+	
+	//アニメーションチェック
+	var arr=animationData;
+	for(var i=0;i<arr.length;i++){
+		var trigger=arr[i].trigger;
+		var trgarr=trigger.split(":");
+		if(animationStatus[arr[i].aniid]==0){
+			if(trgarr[0]=="ended" && animationStatus[trgarr[1]]==2){
+				startAnimation(arr[i].aniid);
+			}
+			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1){
+				startAnimation(arr[i].aniid);
+			}
+			if(trgarr[0]=="hit" && isHitObjectsById(trgarr[1],trgarr[2])==true){
+				startAnimation(arr[i].aniid);
+			}
+		}
+	}
+}
+
+//ツール==============================================================================================
 //レイヤーを整列
 function setLayers(){
 	var arr=canvas._objects;
@@ -286,6 +292,85 @@ function getObjectById(id){
 		}
 	}
 	return null;
+}
+
+//aniidからアニメーションを取得
+function getAnimationById(aniid){
+	var arr=animationData;
+	for(var i=0;i<arr.length;i++){
+		if(arr[i].aniid==aniid){
+			return arr[i];
+		}
+	}
+	return null;
+}
+
+//aniidからアニメーションを取得 SELECTED
+function getAniidBySelectedId(id){
+	var arr=animationData;
+	for(var i=0;i<arr.length;i++){
+		var trigger=arr[i].trigger;
+		var trgarr=trigger.split(":");
+		if(trgarr[0]=="selected" && trgarr[1]==id){
+			return arr[i].aniid;
+		}
+	}
+	return null;
+}
+
+//aniidからアニメーションを取得 ADDED
+function getAniidByAddedId(id){
+	var arr=animationData;
+	for(var i=0;i<arr.length;i++){
+		var trigger=arr[i].trigger;
+		var trgarr=trigger.split(":");
+		if(trgarr[0]=="added" && trgarr[1]==id){
+			return arr[i].aniid;
+		}
+	}
+	return null;
+}
+
+//２つのオブジェクトがぶつかっているかを確認
+function isHitObjectsById(sid,did){
+	var arr=canvas._objects;
+	var sobj=getObjectById(sid);
+	var dobj=getObjectById(did);
+	if(sobj.left+sobj.width/2>dobj.left-dobj.width/2 && sobj.left-sobj.width/2 < dobj.left+dobj.width/2 &&
+	sobj.top+sobj.height/2>dobj.top-dobj.height/2 && sobj.top-sobj.height/2 < dobj.top+dobj.height/2){
+		return true;
+	}
+	return false;
+}
+
+//ページを描画
+function makePage(){
+	animationStatus = new Array();
+	for(var i=0;i<objectData.length;i++){
+		if(objectData[i].pageNum==currentPageNum){
+		  	if(objectData[i].animation.length>0){animationData=objectData[i].animation;}
+		  	canvas.setHeight(objectData[i].height);
+		  	canvas.setWidth(objectData[i].width);
+		  	$("#EventCatcher").css( "width", objectData[i].width);
+		  	$("#EventCatcher").css( "height", objectData[i].height);
+		  	makeObjects(objectData[i].data);
+		}
+    }
+	for(var i=0;i<animationData.length;i++){
+		animationStatus[animationData[i].aniid]=0;
+    }
+}
+
+
+function updateElementPropertyById(obj){
+	for(var i=0;i<elementData.length;i++){
+		if(elementData[i].id==obj.id){
+			elementData[i].x=obj.left-obj.width/2;
+			elementData[i].y=obj.top-obj.height/2;
+			elementData[i].width=obj.width;
+			elementData[i].height=obj.height;
+		}
+	}
 }
 
 //文字を改行
