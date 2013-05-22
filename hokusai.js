@@ -213,7 +213,7 @@ function SelectedEvent(obj) {
   }
 
   //アニメーション
-  if(getAniidBySelectedId(obj.id)!=null){
+  if(getAniidBySelectedId(obj.id)!=null && animationStatus[getAniidBySelectedId(obj.id)]==0){
   	startAnimation(getAniidBySelectedId(obj.id));
   }		
 };
@@ -267,6 +267,11 @@ function timer()
 			}
 		}
 	}
+	for(var i=0;i<arr.length;i++){
+		if(parseInt(arr[i].repeat)>0 && animationStatus[arr[i].aniid]==2){
+			animationStatus[arr[i].aniid]=0;
+		}
+	}
 }
 
 //ツール==============================================================================================
@@ -311,6 +316,14 @@ function getAniidBySelectedId(id){
 	for(var i=0;i<arr.length;i++){
 		var trigger=arr[i].trigger;
 		var trgarr=trigger.split(":");
+		if(trgarr[0]=="selected" && trgarr[1]==id && animationStatus[arr[i].aniid]==trgarr[2]){
+			return arr[i].aniid;
+		}
+	}
+
+	for(var i=0;i<arr.length;i++){
+		var trigger=arr[i].trigger;
+		var trgarr=trigger.split(":");
 		if(trgarr[0]=="selected" && trgarr[1]==id){
 			return arr[i].aniid;
 		}
@@ -336,6 +349,7 @@ function isHitObjectsById(sid,did){
 	var arr=canvas._objects;
 	var sobj=getObjectById(sid);
 	var dobj=getObjectById(did);
+	console.log(sobj);
 	if(sobj.left+sobj.width/2>dobj.left-dobj.width/2 && sobj.left-sobj.width/2 < dobj.left+dobj.width/2 &&
 	sobj.top+sobj.height/2>dobj.top-dobj.height/2 && sobj.top-sobj.height/2 < dobj.top+dobj.height/2){
 		return true;
