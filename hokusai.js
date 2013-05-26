@@ -4,21 +4,15 @@ var objectData =new Array();
 var caimageview=new Array();
 var animationData = new Array();
 var animationStatus = new Array(); //0:アニメーションしていない 1:アニメーション中 2:アニメーション終了済み
-var elementData = new Array();
 var currentPageNum=0;
 var clicking=0;
 var hit=0;
 canvas.selection = false; //グループ選択を解除
 
-setInterval(function(){timer()},20); //タイマー関数の発動
+setInterval(function(){timer()},10); //タイマー関数の発動
 var animationing=0;
 
-$("#ccon").mousemove(function(event){
-   canvas.renderAll();
-}); 
-
-
-//JSON読み込み================================================
+//JSON読み込み============================================================================================================================================
 var url = 'sample.json';
 
 $.getJSON(url, function(data){
@@ -26,7 +20,8 @@ $.getJSON(url, function(data){
 	  objectData = data.slice(0);
 	  makePage();
 });
-//クラス宣言==================================================
+
+//クラス宣言==============================================================================================================================================
 var CAView = fabric.util.createClass(fabric.Rect, {
 	initialize: function(options) {
 	    options || (options = { });
@@ -61,7 +56,7 @@ var CALabel = fabric.util.createClass(fabric.Text, {
 	    		}
 });
 
-//オブジェクト生成==============================================
+//オブジェクト生成==========================================================================================================================================
 
 function makeObjects(arr){
 	canvas.clear();
@@ -133,7 +128,6 @@ function makeObjects(arr){
 function makeCAImageView(arr, callBack){
 var count = 0;
  var img = [];
-    
  for(var i in arr ){
   img[i] = new Image();
   img[i].src = arr[i].src;
@@ -172,10 +166,9 @@ function imageLoaded(img,arr){
 			setLayers();
 	}
 }
-//====================================
 
-//イベント===========================================================================================
-//イベントキャッチ==========================================================================
+//イベント=========================================================================================================================================
+//イベントキャッチ========================================================================================================================
 //追加時
 canvas.on('object:added', function(e) {
   //アニメーション
@@ -185,18 +178,17 @@ canvas.on('object:added', function(e) {
   }
 });
 
-//タッチ
+//タッチイベントのキャッチ
 $("#EventCatcher").mousedown(function(event){
-console.log("eventcatch");
-			var objarr=canvas._objects;
-		  	for(var i=0;i<objarr.length;i++){
-			  	if(event.pageX>objarr[i].left-objarr[i].width/2 && event.pageX<objarr[i].left+objarr[i].width/2 && event.pageY>objarr[i].top-objarr[i].height/2 && event.pageY<objarr[i].top+objarr[i].height/2){   
-			  		SelectedEvent(objarr[i]);
-				}
-					  	
-			}
+		var objarr=canvas._objects;
+	  	for(var i=0;i<objarr.length;i++){
+		  	if(event.pageX>objarr[i].left-objarr[i].width/2 && event.pageX<objarr[i].left+objarr[i].width/2 && event.pageY>objarr[i].top-objarr[i].height/2 && event.pageY<objarr[i].top+objarr[i].height/2){   
+		  		SelectedEvent(objarr[i]);
+			}				  	
+		}
 });
 
+//タッチの実行
 function SelectedEvent(obj) {
   var link=obj.href;
   if(link!=''){
@@ -218,7 +210,7 @@ function SelectedEvent(obj) {
   }		
 };
 
-//アニメーションツール=================================================================================================
+//アニメーションツール===============================================================================================================================================
 //アニメーションの実行
 function startAnimation(aniid){
 	//アニメーション
@@ -227,10 +219,12 @@ function startAnimation(aniid){
 	var targetstr=ani.target;
 	var obj=getObjectById(targetstr);
 	obj.animate(ani.element, ani.value, {
+		//アニメーション中はanimationStatusを1に
   		onChange: function(value) {
   			if(animationing==0){animationing=1;}
   			animationStatus[ani.aniid]=1;
 		},
+		//アニメーション終了後はanimationStatusを2に
 		onComplete: function() {
 			animationing=0;
 			animationStatus[ani.aniid]=2;
@@ -239,42 +233,49 @@ function startAnimation(aniid){
 		duration: ani.duration
 	});
 }
-//=============================================================
 
-
-//タイマー関数===============================================================================================================
+//タイマー関数=============================================================================================================================================================
 function timer()
 {
+	var arr=animationData;
+
 	//アニメーションのレンダリング
 	if(animationing==1){
 		canvas.renderAll();
 	}
-	
+		
 	//アニメーションチェック
-	var arr=animationData;
 	for(var i=0;i<arr.length;i++){
 		var trigger=arr[i].trigger;
 		var trgarr=trigger.split(":");
 		if(animationStatus[arr[i].aniid]==0){
+			//アニメーション終了判定
 			if(trgarr[0]=="ended" && animationStatus[trgarr[1]]==2){
 				startAnimation(arr[i].aniid);
 			}
+			//アニメーションスタート判定
 			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1){
 				startAnimation(arr[i].aniid);
 			}
+			//当たり判定
 			if(trgarr[0]=="hit" && isHitObjectsById(trgarr[1],trgarr[2])==true){
 				startAnimation(arr[i].aniid);
 			}
 		}
 	}
+	
+	//繰り返し判定
 	for(var i=0;i<arr.length;i++){
 		if(parseInt(arr[i].repeat)>0 && animationStatus[arr[i].aniid]==2){
+			console.log(arr[i].repeat);
+			var tmpaniid=arr[i].aniid;
 			animationStatus[arr[i].aniid]=0;
+			animationData[i].repeat=arr[i].repeat-1;
 		}
 	}
 }
 
-//ツール==============================================================================================
+//ツール============================================================================================================================================
 //レイヤーを整列
 function setLayers(){
 	var arr=canvas._objects;
@@ -310,7 +311,7 @@ function getAnimationById(aniid){
 	return null;
 }
 
-//aniidからアニメーションを取得 SELECTED
+//idからアニメーションを取得 SELECTED
 function getAniidBySelectedId(id){
 	var arr=animationData;
 	for(var i=0;i<arr.length;i++){
@@ -320,7 +321,7 @@ function getAniidBySelectedId(id){
 			return arr[i].aniid;
 		}
 	}
-
+	
 	for(var i=0;i<arr.length;i++){
 		var trigger=arr[i].trigger;
 		var trgarr=trigger.split(":");
@@ -349,7 +350,6 @@ function isHitObjectsById(sid,did){
 	var arr=canvas._objects;
 	var sobj=getObjectById(sid);
 	var dobj=getObjectById(did);
-	console.log(sobj);
 	if(sobj.left+sobj.width/2>dobj.left-dobj.width/2 && sobj.left-sobj.width/2 < dobj.left+dobj.width/2 &&
 	sobj.top+sobj.height/2>dobj.top-dobj.height/2 && sobj.top-sobj.height/2 < dobj.top+dobj.height/2){
 		return true;
@@ -373,18 +373,6 @@ function makePage(){
 	for(var i=0;i<animationData.length;i++){
 		animationStatus[animationData[i].aniid]=0;
     }
-}
-
-
-function updateElementPropertyById(obj){
-	for(var i=0;i<elementData.length;i++){
-		if(elementData[i].id==obj.id){
-			elementData[i].x=obj.left-obj.width/2;
-			elementData[i].y=obj.top-obj.height/2;
-			elementData[i].width=obj.width;
-			elementData[i].height=obj.height;
-		}
-	}
 }
 
 //文字を改行
@@ -458,5 +446,4 @@ function splitText(label,width){
 	newlabel.lockMovementY = true;		
 	
 	 return newlabel;
-	
 }
