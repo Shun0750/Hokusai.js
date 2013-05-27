@@ -25,7 +25,7 @@ setInterval(function(){timer()},10); //タイマー関数の発動
 var animationing=0;
 
 //JSON読み込み============================================================================================================================================
-var url = 'sample.json';
+var url = 'sample2.json';
 //var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
 
 $.getJSON(url, function(data){
@@ -259,7 +259,11 @@ console.log(ani.value);
 		//値を直接指定のとき
 		var ssval=obj[selem];
 		obj.animate(selem, sval, {
+			onChange: function(value) {
+  				if(animationing==0)animationing=1;
+  			},
 			onComplete: function() {
+				animationing=0;
 				ani.value=ssval.toString();
 				ani.repeat-=1;
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
@@ -277,9 +281,14 @@ console.log(ani.value);
 			newval+='=-';
 			newval+=ani.value.substring(2);		
 		}
+		console.log(obj.id+ani.element+newval);
 		obj.animate(ani.element, newval, {
 			//アニメーション終了後はanimationStatusを2に
+			onChange: function(value) {
+  				if(animationing==0)animationing=1;
+  			},
 			onComplete: function() {
+				animationing=0;
 				ani.value=newval;
 				ani.repeat-=1;
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
