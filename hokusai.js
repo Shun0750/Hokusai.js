@@ -35,7 +35,7 @@ $.getJSON(url, function(data){
 });
 
 //クラス宣言==============================================================================================================================================
-var CAView = fabric.util.createClass(fabric.Rect, {
+var SCView = fabric.util.createClass(fabric.Rect, {
 	initialize: function(options) {
 	    options || (options = { });
 	
@@ -47,7 +47,7 @@ var CAView = fabric.util.createClass(fabric.Rect, {
 	}
 });
 
-var CAImageView = fabric.util.createClass(fabric.Image, {
+var SCImageView = fabric.util.createClass(fabric.Image, {
 		initialize: function(element,options){
 				this.callSuper('initialize',element,options);
 			    this.set('pageid', options.pageid || -1);
@@ -57,7 +57,7 @@ var CAImageView = fabric.util.createClass(fabric.Image, {
     		}
 });
 
-var CALabel = fabric.util.createClass(fabric.Text, {
+var SCLabel = fabric.util.createClass(fabric.Text, {
 		initialize: function(element,options){
 				this.callSuper('initialize',element,options);
 			    this.set('pageid', options.pageid || -1);
@@ -73,19 +73,19 @@ var CALabel = fabric.util.createClass(fabric.Text, {
 
 function makeObjects(arr){
 	canvas.clear();
-    caimageview=[];
+    SCimageview=[];
 	//それぞれのオブジェクト配列の生成
 	for(var i=0;i<arr.length;i++){
-		if(arr[i].type=="CAImageView"){
-			caimageview.push(arr[i]);
+		if(arr[i].type=="SCImageView"){
+			SCimageview.push(arr[i]);
 		}
 	}
-	makeCAImageView( caimageview, imageLoaded );
+	makeSCImageView( SCimageview, imageLoaded );
 	
-	//CAViewの描画
+	//SCViewの描画
 	for(var i=0;i<arr.length;i++){
-		if(arr[i].type=="CAView"){
-			var newview = new CAView({
+		if(arr[i].type=="SCView"){
+			var newview = new SCView({
 			  id:arr[i].id,
 			  left: arr[i].x+arr[i].width/2,
 			  top: arr[i].y+arr[i].height/2,
@@ -104,15 +104,15 @@ function makeObjects(arr){
 			newview.lockMovementX = true;
 			newview.lockMovementY = true;
 			canvas.add(newview);
-		}// end of arr[i].type=="CAView"
-		//CALabelの描画
-		if(arr[i].type=="CALabel"){
+		}// end of arr[i].type=="SCView"
+		//SCLabelの描画
+		if(arr[i].type=="SCLabel"){
 			var labelwidth=10000;
 			if(arr[i].width){
 				labelwidth=arr[i].width;
 			}
 			
-			var newlabel = new CALabel(arr[i].text,{
+			var newlabel = new SCLabel(arr[i].text,{
 			  id:arr[i].id,
 			  left: arr[i].x,
 			  top: arr[i].y,
@@ -132,13 +132,13 @@ function makeObjects(arr){
 			  animation:arr[i].animation
 			 });	
 			canvas.add(splitText(newlabel,labelwidth));
-		}//end of arr[i].type=="CALabel"
+		}//end of arr[i].type=="SCLabel"
 	}//end of for(var i=0;i<arr.length;i++)
 	setLayers();
 }
 
-//ロード終了まで待ってからCAImageViewを描画
-function makeCAImageView(arr, callBack){
+//ロード終了まで待ってからSCImageViewを描画
+function makeSCImageView(arr, callBack){
 var count = 0;
  var img = [];
  for(var i in arr ){
@@ -152,11 +152,11 @@ var count = 0;
   }
  }
 } 
-//ロード終了後のCAImageVIew描画
+//ロード終了後のSCImageVIew描画
 function imageLoaded(img,arr){
 
 	for(var i=0;i<img.length;i++){
-			var newimageview = new CAImageView(img[i],{
+			var newimageview = new SCImageView(img[i],{
 			  	  id:arr[i].id,
 				  left: arr[i].x+arr[i].width/2,
 				  top: arr[i].y+arr[i].height/2,
@@ -243,7 +243,10 @@ function startAnimation(aniid){
 		onComplete: function() {
 			animationing=0;
 			animationStatus[ani.aniid]=2;
-			if(ani.repeat>0)repeatAnimation(obj,ani,selem,sval);
+			if(ani.repeat>0){
+				ani.repeat=ani.repeat*2;
+				repeatAnimation(obj,ani,selem,sval);
+			}
 		},
 		easing: fabric.util.ease[ani.easing],
 		duration: ani.duration
@@ -258,6 +261,7 @@ console.log(ani.value);
 		obj.animate(selem, sval, {
 			onComplete: function() {
 				ani.value=ssval.toString();
+				ani.repeat-=1;
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
 			},
 			easing: fabric.util.ease[ani.easing],
@@ -277,6 +281,7 @@ console.log(ani.value);
 			//アニメーション終了後はanimationStatusを2に
 			onComplete: function() {
 				ani.value=newval;
+				ani.repeat-=1;
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
 			},
 			easing: fabric.util.ease[ani.easing],
@@ -440,7 +445,7 @@ function splitText(label,width){
 	if(label.width>width){
 		for(var i=0;i<str.length;i++){
 			var tmpstr=str.substring(currentnum, i+1);
-				var tmptext = new CALabel(tmpstr,{
+				var tmptext = new SCLabel(tmpstr,{
 					  fontSize: label.fontSize,
 					  fontFamily: label.fontFamily,
 					  fontStyle: label.fontStyle,
@@ -470,7 +475,7 @@ function splitText(label,width){
 		if(i!=textarr.length-1){ resstr+="\n";}
 	}
 	
-	var newlabel = new CALabel(resstr,{
+	var newlabel = new SCLabel(resstr,{
 			  id:label.id,
 			  left: label.left,
 			  top: label.top,
