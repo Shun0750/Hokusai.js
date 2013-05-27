@@ -1,3 +1,15 @@
+// getパラメータ取得
+function getRequest(){
+    var url = window.location;
+    var get = new Object();
+    var ret = String(url.pathname).split("/");
+    for(var i = 0; i < ret.length; i++) {
+        get[i] = ret[i];
+    }
+    return get;
+}
+var get = getRequest();
+
 //グローバル変数==============================================
 var canvas = new fabric.Canvas('canvasspace');
 var objectData =new Array();
@@ -14,6 +26,7 @@ var animationing=0;
 
 //JSON読み込み============================================================================================================================================
 var url = 'sample.json';
+//var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
