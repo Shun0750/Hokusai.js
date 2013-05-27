@@ -227,24 +227,62 @@ function SelectedEvent(obj) {
 //アニメーションの実行
 function startAnimation(aniid){
 	//アニメーション
-	var check2=0;
 	var ani=getAnimationById(aniid);
 	var targetstr=ani.target;
 	var obj=getObjectById(targetstr);
+	var selem=ani.element;
+	var sval=obj[ani.element];
+	
 	obj.animate(ani.element, ani.value, {
 		//アニメーション中はanimationStatusを1に
   		onChange: function(value) {
   			if(animationing==0){animationing=1;}
   			animationStatus[ani.aniid]=1;
-		},
+  		},
 		//アニメーション終了後はanimationStatusを2に
 		onComplete: function() {
 			animationing=0;
 			animationStatus[ani.aniid]=2;
+			if(ani.repeat>0)repeatAnimation(obj,ani,selem,sval);
 		},
 		easing: fabric.util.ease[ani.easing],
 		duration: ani.duration
 	});
+}
+
+function repeatAnimation(obj,ani,selem,sval){
+console.log(ani.value);
+	if(ani.value.substring(0, 1)!='='){
+		//値を直接指定のとき
+		var ssval=obj[selem];
+		obj.animate(selem, sval, {
+			onComplete: function() {
+				ani.value=ssval.toString();
+				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
+			},
+			easing: fabric.util.ease[ani.easing],
+			duration: ani.duration
+		});		
+	}else{
+		//'=+'が入ってた時
+		var newval='';
+		if(ani.value.substring(1, 2)=='-'){
+			newval+='=+';
+			newval+=ani.value.substring(2);
+		}else if(ani.value.substring(1, 2)=='+'){
+			newval+='=-';
+			newval+=ani.value.substring(2);		
+		}
+		obj.animate(ani.element, newval, {
+			//アニメーション終了後はanimationStatusを2に
+			onComplete: function() {
+				ani.value=newval;
+				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
+			},
+			easing: fabric.util.ease[ani.easing],
+			duration: ani.duration
+		});
+	}
 }
 
 //タイマー関数=============================================================================================================================================================
@@ -277,6 +315,7 @@ function timer()
 		}
 	}
 	
+	/*
 	//繰り返し判定
 	for(var i=0;i<arr.length;i++){
 		if(parseInt(arr[i].repeat)>0 && animationStatus[arr[i].aniid]==2){
@@ -285,6 +324,10 @@ function timer()
 			animationStatus[arr[i].aniid]=0;
 			animationData[i].repeat=arr[i].repeat-1;
 		}
+	}
+	*/
+	for(var i=0;i<arr.length;i++){
+		if(animationStatus[arr[i].aniid]==2)animationStatus[arr[i].aniid]=0
 	}
 }
 
