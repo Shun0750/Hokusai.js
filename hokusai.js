@@ -25,12 +25,13 @@ setInterval(function(){timer()},10); //タイマー関数の発動
 var animationing=0;
 
 //JSON読み込み============================================================================================================================================
-var url = 'sample2.json';
+var url = 'sample.json';
 //var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
-	  objectData = data.slice(0);
+	  objectData = data;
+	  console.log(objectData);
 	  makePage();
 });
 
@@ -54,6 +55,7 @@ var SCImageView = fabric.util.createClass(fabric.Image, {
 			    this.set('zindex', options.zindex || -1);
 			    this.set('href', options.href || '');
 			    this.set('animation', options.animation || '');
+			    this.set('isaspect', options.animation || 0);
     		}
 });
 
@@ -115,7 +117,7 @@ function makeObjects(arr){
 			var newlabel = new SCLabel(arr[i].text,{
 			  id:arr[i].id,
 			  left: arr[i].x,
-			  top: arr[i].y,
+			  top: arr[i].y+arr[i].height/2,
 			  opacity:parseFloat(arr[i].opacity),
 			  fontSize: arr[i].fontSize,
 			  fontFamily: arr[i].fontFamily,
@@ -144,6 +146,9 @@ var count = 0;
  for(var i in arr ){
   img[i] = new Image();
   img[i].src = arr[i].src;
+  arr[i].aspect = img[i].height/img[i].width;
+			console.log("aspect"+arr[i].isaspect+"+"+arr[i].aspect);
+
   img[i].onload = function(){
    count++;
    if(count == arr.length){
@@ -156,12 +161,23 @@ var count = 0;
 function imageLoaded(img,arr){
 
 	for(var i=0;i<img.length;i++){
+			var iwidth=arr[i].width;
+			var iheight=arr[i].height;
+			var tmpaspect = iheight/iwidth;
+			if(arr[i].isaspect==1 && arr[i].aspect<tmpaspect){
+				iheight=iwidth*arr[i].aspect;
+			}
+			if(arr[i].isaspect==1 && arr[i].aspect>tmpaspect){
+				iwidth=iheight/arr[i].aspect;
+			}
+			console.log("aspect"+arr[i].isaspect+"+"+arr[i].aspect+"+"+iwidth+"+"+iheight);
+			
 			var newimageview = new SCImageView(img[i],{
 			  	  id:arr[i].id,
-				  left: arr[i].x+arr[i].width/2,
-				  top: arr[i].y+arr[i].height/2,
-				  width:arr[i].width,
-				  height:arr[i].height,
+				  left: arr[i].x+iwidth/2,
+				  top: arr[i].y+iheight/2,
+				  width:iwidth,
+				  height:iheight,
 				  opacity:parseFloat(arr[i].opacity),
 				  angle: arr[i].angle,
 				  href: arr[i].href,
@@ -244,7 +260,7 @@ function startAnimation(aniid){
 			animationing=0;
 			animationStatus[ani.aniid]=2;
 			if(ani.repeat>0){
-				ani.repeat=ani.repeat*2;
+				ani.repeat=ani.repeat*2-1;
 				repeatAnimation(obj,ani,selem,sval);
 			}
 		},
