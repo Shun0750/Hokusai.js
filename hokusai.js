@@ -1,3 +1,7 @@
+//Hokusai.js-1.0
+//2013 HITOKUSE Inc. All Rights Reserved.
+
+
 // getパラメータ取得
 function getRequest(){
     var url = window.location;
@@ -30,8 +34,7 @@ var url = 'sample.json';
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
-	  objectData = data;
-	  console.log(objectData);
+	  objectData = data.slice(0); //arrayをクローン
 	  makePage();
 });
 
@@ -147,7 +150,6 @@ var count = 0;
   img[i] = new Image();
   img[i].src = arr[i].src;
   arr[i].aspect = img[i].height/img[i].width;
-			console.log("aspect"+arr[i].isaspect+"+"+arr[i].aspect);
 
   img[i].onload = function(){
    count++;
@@ -170,8 +172,7 @@ function imageLoaded(img,arr){
 			if(arr[i].isaspect==1 && arr[i].aspect>tmpaspect){
 				iwidth=iheight/arr[i].aspect;
 			}
-			console.log("aspect"+arr[i].isaspect+"+"+arr[i].aspect+"+"+iwidth+"+"+iheight);
-			
+
 			var newimageview = new SCImageView(img[i],{
 			  	  id:arr[i].id,
 				  left: arr[i].x+iwidth/2,
@@ -187,7 +188,6 @@ function imageLoaded(img,arr){
 				  ry:arr[i].ry,
 				  animation:arr[i].animation
 			});	
-			console.log(arr[i].href);
 			newimageview.hasControls=false;
 			newimageview.lockMovementX = true;
 			newimageview.lockMovementY = true;
@@ -260,8 +260,9 @@ function startAnimation(aniid){
 			animationing=0;
 			animationStatus[ani.aniid]=2;
 			if(ani.repeat>0){
-				ani.repeat=ani.repeat*2-1;
-				repeatAnimation(obj,ani,selem,sval);
+				var tmpani=JSON.parse(JSON.stringify(ani)); //aniの中身をコピー
+				tmpani.repeat=ani.repeat*2-1;
+				repeatAnimation(obj,tmpani,selem,sval);
 			}
 		},
 		easing: fabric.util.ease[ani.easing],
@@ -270,7 +271,6 @@ function startAnimation(aniid){
 }
 
 function repeatAnimation(obj,ani,selem,sval){
-console.log(ani.value);
 	if(ani.value.substring(0, 1)!='='){
 		//値を直接指定のとき
 		var ssval=obj[selem];
@@ -297,7 +297,6 @@ console.log(ani.value);
 			newval+='=-';
 			newval+=ani.value.substring(2);		
 		}
-		console.log(obj.id+ani.element+newval);
 		obj.animate(ani.element, newval, {
 			//アニメーション終了後はanimationStatusを2に
 			onChange: function(value) {
@@ -318,7 +317,7 @@ console.log(ani.value);
 //タイマー関数=============================================================================================================================================================
 function timer()
 {
-	var arr=animationData;
+	var arr=animationData.slice(0);
 
 	//アニメーションのレンダリング
 	if(animationing==1){
@@ -344,18 +343,6 @@ function timer()
 			}
 		}
 	}
-	
-	/*
-	//繰り返し判定
-	for(var i=0;i<arr.length;i++){
-		if(parseInt(arr[i].repeat)>0 && animationStatus[arr[i].aniid]==2){
-			console.log(arr[i].repeat);
-			var tmpaniid=arr[i].aniid;
-			animationStatus[arr[i].aniid]=0;
-			animationData[i].repeat=arr[i].repeat-1;
-		}
-	}
-	*/
 	for(var i=0;i<arr.length;i++){
 		if(animationStatus[arr[i].aniid]==2)animationStatus[arr[i].aniid]=0
 	}
@@ -365,7 +352,6 @@ function timer()
 //レイヤーを整列
 function setLayers(){
 	var arr=canvas._objects;
-	console.log(arr);
 	for(var i=arr.length-1;i>0;i--){
 	  for(var j=0;j<i;j++){
 		 if(arr[j].zindex>arr[j+1].zindex){
@@ -446,9 +432,10 @@ function isHitObjectsById(sid,did){
 //ページを描画
 function makePage(){
 	animationStatus = new Array();
+	animationData = new Array();
 	for(var i=0;i<objectData.length;i++){
 		if(objectData[i].pageNum==currentPageNum){
-		  	if(objectData[i].animation.length>0){animationData=objectData[i].animation;}
+		  	if(objectData[i].animation.length>0){animationData=objectData[i].animation.slice(0);}
 		  	canvas.setHeight(objectData[i].height);
 		  	canvas.setWidth(objectData[i].width);
 		  	$("#EventCatcher").css( "width", objectData[i].width);
@@ -493,7 +480,6 @@ function splitText(label,width){
 	}else{
 		textarr.push(str);
 	}
-	console.log(textarr);
 	var resstr="";
 	for(var i=0;i<textarr.length;i++){
 		resstr+=textarr[i];
