@@ -1,4 +1,6 @@
-//Hokusai.js-1.0
+//Hokusai.js-1.0.3
+//アップロード前にjsonの呼び元を変更すること
+
 //2013 HITOKUSE Inc. All Rights Reserved.
 
 
@@ -20,7 +22,7 @@ var objectData =new Array();
 var caimageview=new Array();
 var animationData = new Array();
 var animationStatus = new Array(); //0:アニメーションしていない 1:アニメーション中 2:アニメーション終了済み
-var currentPageNum=0;
+var currentpid=0;
 var clicking=0;
 var hit=0;
 canvas.selection = false; //グループ選択を解除
@@ -29,12 +31,13 @@ setInterval(function(){timer()},10); //タイマー関数の発動
 var animationing=0;
 
 //JSON読み込み============================================================================================================================================
-var url = 'sample.json';
-//var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
+//var url = 'sample.json';
+var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
 	  objectData = data.slice(0); //arrayをクローン
+	  currentpid=getMinPid();
 	  makePage();
 });
 
@@ -58,7 +61,7 @@ var SCImageView = fabric.util.createClass(fabric.Image, {
 			    this.set('zindex', options.zindex || -1);
 			    this.set('href', options.href || '');
 			    this.set('animation', options.animation || '');
-			    this.set('isaspect', options.animation || 0);
+			    this.set('isaspect', options.animation || 1);
     		}
 });
 
@@ -166,6 +169,7 @@ function imageLoaded(img,arr){
 			var iwidth=arr[i].width;
 			var iheight=arr[i].height;
 			var tmpaspect = iheight/iwidth;
+			console.log("aspect"+arr[i].isaspect);
 			if(arr[i].isaspect==1 && arr[i].aspect<tmpaspect){
 				iheight=iwidth*arr[i].aspect;
 			}
@@ -175,8 +179,8 @@ function imageLoaded(img,arr){
 
 			var newimageview = new SCImageView(img[i],{
 			  	  id:arr[i].id,
-				  left: arr[i].x+iwidth/2,
-				  top: arr[i].y+iheight/2,
+				  left: arr[i].x+arr[i].width/2,
+				  top: arr[i].y+arr[i].height/2,
 				  width:iwidth,
 				  height:iheight,
 				  opacity:parseFloat(arr[i].opacity),
@@ -186,7 +190,8 @@ function imageLoaded(img,arr){
 				  shadow:arr[i].shadow,
 				  rx:arr[i].rx,
 				  ry:arr[i].ry,
-				  animation:arr[i].animation
+				  animation:arr[i].animation,
+				  isaspect:arr[i].isaspect
 			});	
 			newimageview.hasControls=false;
 			newimageview.lockMovementX = true;
@@ -210,9 +215,11 @@ canvas.on('object:added', function(e) {
 //タッチイベントのキャッチ
 $("#EventCatcher").mousedown(function(event){
 		var objarr=canvas._objects;
-	  	for(var i=0;i<objarr.length;i++){
-		  	if(event.pageX>objarr[i].left-objarr[i].width/2 && event.pageX<objarr[i].left+objarr[i].width/2 && event.pageY>objarr[i].top-objarr[i].height/2 && event.pageY<objarr[i].top+objarr[i].height/2){   
+		var didLaunch = 0;
+	  	for(var i=objarr.length-1;i>-1;i--){
+		  	if(event.pageX>objarr[i].left-objarr[i].width/2 && event.pageX<objarr[i].left+objarr[i].width/2 && event.pageY>objarr[i].top-objarr[i].height/2 && event.pageY<objarr[i].top+objarr[i].height/2 && didLaunch==0){   
 		  		SelectedEvent(objarr[i]);
+		  		didLaunch=1;
 			}				  	
 		}
 });
@@ -228,7 +235,7 @@ function SelectedEvent(obj) {
 		w.location.href=obj.href;
   	}else{
   	    //別ページへの移動
-	  	currentPageNum=parseInt(obj.href);
+	  	currentpid=parseInt(obj.href);
 	  	makePage(); //ページの生成
     }
   }
@@ -429,12 +436,23 @@ function isHitObjectsById(sid,did){
 	return false;
 }
 
+//一番小さいページ番号を取得
+function getMinPid(){
+	var minpid=1000;
+	for(var i=0;i<objectData.length;i++){
+		if(minpid > objectData[i].pid){
+			minpid=objectData[i].pid;
+		}
+    }
+    return minpid;
+}
+
 //ページを描画
 function makePage(){
 	animationStatus = new Array();
 	animationData = new Array();
 	for(var i=0;i<objectData.length;i++){
-		if(objectData[i].pageNum==currentPageNum){
+		if(objectData[i].pid==currentpid){
 		  	if(objectData[i].animation.length>0){animationData=objectData[i].animation.slice(0);}
 		  	canvas.setHeight(objectData[i].height);
 		  	canvas.setWidth(objectData[i].width);
