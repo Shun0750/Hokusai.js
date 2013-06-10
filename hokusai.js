@@ -1,4 +1,4 @@
-//Hokusai.js-1.0.4
+//Hokusai.js-1.0.6
 //アップロード前にjsonの呼び元を変更すること
 
 //2013 HITOKUSE Inc. All Rights Reserved.
@@ -32,7 +32,6 @@ var animationing=0;
 
 //JSON読み込み============================================================================================================================================
 //var url = 'sample.json';
-var url = "http://smartcanvas.net/appdata/user" + get[2] + "/apps" + get[4] + "/json/dev.json";
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
@@ -61,7 +60,8 @@ var SCImageView = fabric.util.createClass(fabric.Image, {
 			    this.set('zindex', options.zindex || -1);
 			    this.set('href', options.href || '');
 			    this.set('animation', options.animation || '');
-			    this.set('isaspect', options.animation || 1);
+			    this.set('isaspect', options.isaspect || 1);
+			    this.set('aspect', options.isaspect || 1);
     		}
 });
 
@@ -152,10 +152,10 @@ var count = 0;
  for(var i in arr ){
   img[i] = new Image();
   img[i].src = arr[i].src;
-  arr[i].aspect = img[i].height/img[i].width;
-
+  img[i].id=i;
   img[i].onload = function(){
    count++;
+   arr[this.id].aspect = this.height/this.width;
    if(count == arr.length){
     callBack(img,arr);
    }
@@ -169,7 +169,7 @@ function imageLoaded(img,arr){
 			var iwidth=arr[i].width;
 			var iheight=arr[i].height;
 			var tmpaspect = iheight/iwidth;
-			console.log("aspect"+arr[i].isaspect);
+				console.log(arr[i]);
 			if(arr[i].isaspect==1 && arr[i].aspect<tmpaspect){
 				iheight=iwidth*arr[i].aspect;
 			}
