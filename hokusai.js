@@ -1,4 +1,4 @@
-//Hokusai.js-1.0.3
+//Hokusai.js-1.0.4
 //アップロード前にjsonの呼び元を変更すること
 
 //2013 HITOKUSE Inc. All Rights Reserved.
