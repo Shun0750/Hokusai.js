@@ -4,6 +4,7 @@
 //2013 HITOKUSE Inc. All Rights Reserved.
 
 
+
 // getパラメータ取得
 function getRequest(){
     var url = window.location;
@@ -25,6 +26,13 @@ var animationStatus = new Array(); //0:アニメーションしていない 1:�
 var currentpid=0;
 var clicking=0;
 var hit=0;
+var ratio = 1;
+var retina = window.devicePixelRatio > 1;
+if (retina)
+{
+    ratio = 2;
+}
+
 canvas.selection = false; //グループ選択を解除
 
 setInterval(function(){timer()},10); //タイマー関数の発動
@@ -95,18 +103,17 @@ function makeObjects(arr){
 		if(arr[i].type=="SCView"){
 			var newview = new SCView({
 			  id:arr[i].id,
-			  left: arr[i].x+arr[i].width/2,
-			  top: arr[i].y+arr[i].height/2,
-			  rx:arr[i].rx,
-			  ry:arr[i].ry,
-			  width:arr[i].width,
-			  height:arr[i].height,
+			  left: (arr[i].x+arr[i].width/2)*ratio,
+			  top: (arr[i].y+arr[i].height/2)*ratio,
+			  rx:arr[i].rx*ratio,
+			  ry:arr[i].ry*ratio,
+			  width:arr[i].width*ratio,
+			  height:arr[i].height*ratio,
 			  opacity:parseFloat(arr[i].opacity),
 			  fill: arr[i].backgroundColor,
 			  angle: arr[i].angle,
 			  href: arr[i].href,
-			  zindex:arr[i].zindex,
-			  animation:arr[i].animation
+			  zindex:arr[i].zindex
 			});	
 			newview.hasControls=false;
 			newview.lockMovementX = true;
@@ -122,8 +129,8 @@ function makeObjects(arr){
 			
 			var newlabel = new SCLabel(arr[i].text,{
 			  id:arr[i].id,
-			  left: arr[i].x,
-			  top: arr[i].y+arr[i].height/2,
+			  left: arr[i].x*ratio,
+			  top: (arr[i].y+arr[i].height/2)*ratio,
 			  opacity:parseFloat(arr[i].opacity),
 			  fontSize: arr[i].fontSize,
 			  fontFamily: arr[i].fontFamily,
@@ -136,8 +143,7 @@ function makeObjects(arr){
 			  strokeStyle: arr[i].strokeStyle,
 			  angle: arr[i].angle,
 			  href: arr[i].href,
-			  zindex:arr[i].zindex,
-			  animation:arr[i].animation
+			  zindex:arr[i].zindex
 			 });	
 			canvas.add(splitText(newlabel,labelwidth));
 		}//end of arr[i].type=="SCLabel"
@@ -179,18 +185,17 @@ function imageLoaded(img,arr){
 
 			var newimageview = new SCImageView(img[i],{
 			  	  id:arr[i].id,
-				  left: arr[i].x+arr[i].width/2,
-				  top: arr[i].y+arr[i].height/2,
-				  width:iwidth,
-				  height:iheight,
+				  left: (arr[i].x+arr[i].width/2)*ratio,
+				  top: (arr[i].y+arr[i].height/2)*ratio,
+				  width:iwidth*ratio,
+				  height:iheight*ratio,
 				  opacity:parseFloat(arr[i].opacity),
 				  angle: arr[i].angle,
 				  href: arr[i].href,
 				  zindex:arr[i].zindex,
 				  shadow:arr[i].shadow,
-				  rx:arr[i].rx,
-				  ry:arr[i].ry,
-				  animation:arr[i].animation,
+				  rx:arr[i].rx*ratio,
+				  ry:arr[i].ry*ratio
 				  isaspect:arr[i].isaspect
 			});	
 			newimageview.hasControls=false;
@@ -482,7 +487,7 @@ function splitText(label,width){
 					  textShadow:label.textShadow,
 					  strokeWidth:label.strokeWidth,
 					  strokeStyle: label.strokeStyle,
-					  angle: label.angle,
+					  angle: label.angle
 			   });	
 
 			if(tmptext.width>width){
@@ -506,8 +511,8 @@ function splitText(label,width){
 	
 	var newlabel = new SCLabel(resstr,{
 			  id:label.id,
-			  left: label.left,
-			  top: label.top,
+			  left: label.left*ratio,
+			  top: label.top*ratio,
 			  opacity:label.opacity,
 			  fontSize: label.fontSize,
 			  fontFamily: label.fontFamily,
@@ -524,13 +529,15 @@ function splitText(label,width){
 			  animation:label.animation
 	});	
 	if(newlabel.textAlign=="right" && label.width<width){
-		newlabel.set('left',newlabel.left+width-newlabel.width/2);
+		newlabel.set('left',(newlabel.left+width-newlabel.width/2)*ratio);
 	}else if(newlabel.textAlign=="center" && label.width<width){
-		newlabel.set('left',newlabel.left+width/2);
+		newlabel.set('left',(newlabel.left+width/2)*ratio);
 	}else{
-		newlabel.set('left',newlabel.left+newlabel.width/2);
+		newlabel.set('left',(newlabel.left+newlabel.width/2)*ratio);
 	}
-	newlabel.set('top',newlabel.top+newlabel.height/2);
+	newlabel.set('top',(newlabel.top+newlabel.height/2)*ratio);
+	newlabel.set('width',newlabel*ratio);
+	newlabel.set('height',newlabel*ratio);
 	newlabel.hasControls=false;
 	newlabel.lockMovementX = true;
 	newlabel.lockMovementY = true;		
