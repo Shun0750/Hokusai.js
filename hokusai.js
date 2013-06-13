@@ -1,9 +1,7 @@
-//Hokusai.js-1.0.6
+//Hokusai.js-1.0.7
 //アップロード前にjsonの呼び元を変更すること
 
 //2013 HITOKUSE Inc. All Rights Reserved.
-
-
 
 // getパラメータ取得
 function getRequest(){
@@ -31,6 +29,10 @@ var retina = window.devicePixelRatio > 1;
 if (retina)
 {
     ratio = 2;
+    var viewportmeta = document.querySelector('meta[name="viewport"]');
+    if (viewportmeta) {
+        viewportmeta.content = 'width=device-width, minimum-scale=0.5, maximum-scale=0.5, initial-scale=0.5';
+    }
 }
 
 canvas.selection = false; //グループ選択を解除
@@ -40,6 +42,8 @@ var animationing=0;
 
 //JSON読み込み============================================================================================================================================
 //var url = 'sample.json';
+//	var tmpratio=1;
+//	if(ratio == 2 && ani.element != "angle"){tmpratio=2;}
 
 $.getJSON(url, function(data){
 	  //objectData = JSON.parse(localStorage.JSON).slice(0);	//オブジェクトデータをグローバル変数に
@@ -81,7 +85,7 @@ var SCLabel = fabric.util.createClass(fabric.Text, {
 			    this.set('href', options.href || '');
 			    this.set('animation', options.animation || '');
 			    this.set('textAlign', options.textAlign || 'left');
-			    this.set('fontFamily', options.fontFamily || 'Hoefler Text');
+			    this.set('fontFamily', options.fontFamily || 'times,serif');
 	    		}
 });
 
@@ -195,7 +199,7 @@ function imageLoaded(img,arr){
 				  zindex:arr[i].zindex,
 				  shadow:arr[i].shadow,
 				  rx:arr[i].rx*ratio,
-				  ry:arr[i].ry*ratio
+				  ry:arr[i].ry*ratio,
 				  isaspect:arr[i].isaspect
 			});	
 			newimageview.hasControls=false;
@@ -260,8 +264,17 @@ function startAnimation(aniid){
 	var obj=getObjectById(targetstr);
 	var selem=ani.element;
 	var sval=obj[ani.element];
+	var tmpvalue=ani.value;
+	if(ani.element!="angle"){
+		if(ani.value.substring(0, 1)!='='){
+			tmpvalue=ani.value*ratio;
+		}else{
+			var cal=ani.value.substring(2)*ratio;
+			tmpvalue=ani.value.substring(0,2)+cal;
+		}
+	}
 	
-	obj.animate(ani.element, ani.value, {
+	obj.animate(ani.element, tmpvalue, {
 		//アニメーション中はanimationStatusを1に
   		onChange: function(value) {
   			if(animationing==0){animationing=1;}
@@ -286,6 +299,7 @@ function repeatAnimation(obj,ani,selem,sval){
 	if(ani.value.substring(0, 1)!='='){
 		//値を直接指定のとき
 		var ssval=obj[selem];
+		if(ani.element!="angle"){sval=sval*ratio}
 		obj.animate(selem, sval, {
 			onChange: function(value) {
   				if(animationing==0)animationing=1;
@@ -304,10 +318,14 @@ function repeatAnimation(obj,ani,selem,sval){
 		var newval='';
 		if(ani.value.substring(1, 2)=='-'){
 			newval+='=+';
-			newval+=ani.value.substring(2);
+			var tmpvalue=ani.value.substring(2);
+			if(ani.element!="angle"){tmpvalue=tmpvalue*ratio;}
+			newval+=tmpvalue;
 		}else if(ani.value.substring(1, 2)=='+'){
 			newval+='=-';
-			newval+=ani.value.substring(2);		
+			var tmpvalue=ani.value.substring(2);
+			if(ani.element!="angle"){tmpvalue=tmpvalue*ratio;}
+			newval+=tmpvalue;		
 		}
 		obj.animate(ani.element, newval, {
 			//アニメーション終了後はanimationStatusを2に
@@ -459,10 +477,10 @@ function makePage(){
 	for(var i=0;i<objectData.length;i++){
 		if(objectData[i].pid==currentpid){
 		  	if(objectData[i].animation.length>0){animationData=objectData[i].animation.slice(0);}
-		  	canvas.setHeight(objectData[i].height);
-		  	canvas.setWidth(objectData[i].width);
-		  	$("#EventCatcher").css( "width", objectData[i].width);
-		  	$("#EventCatcher").css( "height", objectData[i].height);
+		  	canvas.setHeight(objectData[i].height*ratio);
+		  	canvas.setWidth(objectData[i].width*ratio);
+		  	$("#EventCatcher").css( "width", objectData[i].width*ratio);
+		  	$("#EventCatcher").css( "height", objectData[i].height*ratio);
 		  	makeObjects(objectData[i].data);
 		}
     }
@@ -525,8 +543,7 @@ function splitText(label,width){
 			  strokeStyle: label.strokeStyle,
 			  angle: label.angle,
 			  href: label.href,
-			  zindex:label.zindex,
-			  animation:label.animation
+			  zindex:label.zindex
 	});	
 	if(newlabel.textAlign=="right" && label.width<width){
 		newlabel.set('left',(newlabel.left+width-newlabel.width/2)*ratio);
@@ -535,7 +552,7 @@ function splitText(label,width){
 	}else{
 		newlabel.set('left',(newlabel.left+newlabel.width/2)*ratio);
 	}
-	newlabel.set('top',(newlabel.top+newlabel.height/2)*ratio);
+	newlabel.set('top',newlabel.top*ratio);
 	newlabel.set('width',newlabel*ratio);
 	newlabel.set('height',newlabel*ratio);
 	newlabel.hasControls=false;
