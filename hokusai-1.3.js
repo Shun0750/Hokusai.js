@@ -1,4 +1,4 @@
- //Hokusai.js-1.2.0
+ //Hokusai.js-1.3
 //アップロード前にjsonの呼び元を変更すること
 
 //2013 HITOKUSE Inc. All Rights Reserved.
@@ -461,11 +461,11 @@ function startAnimation(aniid){
 		onComplete: function() {
 			canvas.renderAll();
 			animationing=0;
-			console.log("end"+ani.aniid+"+"+ani.element);
 			animationStatus[ani.aniid]=2;
 			if(ani.repeat>0){
 				var tmpani=JSON.parse(JSON.stringify(ani)); //aniの中身をコピー
 				tmpani.repeat=ani.repeat*2-1;
+				animationStatus[ani.aniid]=1;
 				repeatAnimation(obj,tmpani,selem,sval);
 			}
 		},
@@ -475,12 +475,16 @@ function startAnimation(aniid){
 }
 
 function repeatAnimation(obj,ani,selem,sval){
+ 	if(ani.element == "angle") console.log("beforeval"+sval);
 	if(ani.value.substring(0, 1)!='='){
 		//値を直接指定のとき
-		var ssval=obj[selem];
-		if(ani.element=="left"){ssvalue+=obj.width/(2*ratio);}
-		if(ani.element=="top"){ssvalue+=obj.height/(2*ratio);}
-		if(ani.element!="angle" && ani.element!="opacity"){sval=sval*ratio}
+		var ssval=obj[selem];  //戻り先
+		console.log("========="+ani.element);
+		console.log(ssval);
+	//	if(ani.element=="left"){ssval+=obj.width/(2*ratio);}
+	//	if(ani.element=="top"){ssval+=obj.height/(2*ratio);}
+	//	if(ani.element!="angle" && ani.element!="opacity"){sval=sval*ratio}
+		console.log(ssval);
 		obj.animate(selem, sval, {
 			onChange: function(value) {
   				if(animationing==0)animationing=1;
@@ -490,6 +494,7 @@ function repeatAnimation(obj,ani,selem,sval){
 				animationing=0;
 				ani.value=ssval.toString();
 				ani.repeat-=1;
+				console.log(obj[selem]);
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
 			},
 			easing: fabric.util.ease[ani.easing],
@@ -510,9 +515,10 @@ function repeatAnimation(obj,ani,selem,sval){
 			nextval+='=-';
 			var tmpvalue=ani.value.substring(2);
 			if(ani.element!="angle" && ani.element!="opacity"){tmpvalue=tmpvalue*ratio;}
-			newval+=tmpvalue;		
+			newval+=tmpvalue;
 		}
 		nextval+=ani.value.substring(2);
+		if(ani.element == "angle") console.log("newval"+newval);
 		obj.animate(ani.element, newval, {
 			//アニメーション終了後はanimationStatusを2に
 			onChange: function(value) {
@@ -523,7 +529,11 @@ function repeatAnimation(obj,ani,selem,sval){
 				animationing=0;
 				ani.value=nextval;
 				ani.repeat-=1;
-				if(ani.repeat>0)repeatAnimation(obj,ani,selem,nextval);
+				animationStatus[ani.aniid]=2;
+				if(ani.repeat>0){
+					animationStatus[ani.aniid]=1;
+					repeatAnimation(obj,ani,selem,nextval);
+				}
 			},
 			easing: fabric.util.ease[ani.easing],
 			duration: ani.duration
@@ -566,7 +576,7 @@ function timer()
 				startAnimation(arr[i].aniid);
 			}
 			//アニメーションスタート判定
-			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1 && animationStatus[arr[i].target]==0){
+			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1){
 				startAnimation(arr[i].aniid);
 			}
 			//当たり判定
