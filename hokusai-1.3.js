@@ -20,7 +20,7 @@ var animationing=0;
 
 //初期化メソッド============================================================================================================================================
 
-url = 'dev.json';
+url = 'dev2.json';
 
 function preloadImage(){
 //console.log(preloadedImages);
@@ -54,7 +54,6 @@ function preloadImage(){
 		 }
 	}
 }
-
 
 // getパラメータ取得
 function getRequest(){
@@ -109,7 +108,7 @@ function makePage(){
 	for(var i=0;i<objectData.length;i++){
 		if(objectData[i].pid==currentpid){
 		  	if(objectData[i].animation.length>0){
-		  		animationData=objectData[i].animation.slice(0);
+		  		animationData=randomFilter(objectData[i]).animation.slice(0)
 		  	}
 		  	canvas.setHeight(objectData[i].height*ratio);
 		  	canvas.setWidth(objectData[i].width*ratio);
@@ -141,7 +140,8 @@ function makeObjects(arr){
 		makeSCImageView( arr,SCimageview, imageLoaded );
 		makeSCView(arr);
 		makeSCLabel(arr);
-		//makeSCNumber(arr);
+		makeSCNumber(arr);
+		makeSCTimer(arr);
 		setLayers();
 }
 
@@ -150,6 +150,7 @@ function makeSCView(arr){
 		if(arr[i].type=="SCView"){
 			var newview = new SCView({
 			  id:arr[i].id,
+			  type:arr[i].type,
 			  left: calcLeft(arr[i].x,arr[i].width),
 			  top: calcTop(arr[i].y,arr[i].height),
 			  rx:arr[i].rx*ratio,
@@ -173,26 +174,40 @@ function makeSCView(arr){
 
 function makeSCTimer(arr){
 	for(var i=0;i<arr.length;i++){
-		if(arr[i].type=="SCTimer"){
-			var newtimer = new SCTimer({
+		//SCNumberの描画
+		var newtext = arr[i].text;
+		if(arr[i].textwithline!=null){
+			newtext = arr[i].textwithline;
+		}
+		
+		if(arr[i].type=="SCTimer"){			
+			var newlabel = new SCTimer(newtext,{
 			  id:arr[i].id,
+			  type:arr[i].type,
 			  left: calcLeft(arr[i].x,arr[i].width),
-			  top: calcTop(arr[i].y,arr[i].height),
-			  rx:arr[i].rx*ratio,
-			  ry:arr[i].ry*ratio,
-			  width:arr[i].width*ratio,
-			  height:arr[i].height*ratio,
+			  top: calcTop(arr[i].y,arr[i].height)-arr[i].fontSize*ratio+5,
 			  opacity:parseFloat(arr[i].opacity),
-			  fill: arr[i].backgroundColor,
+			  fontSize: arr[i].fontSize*ratio,
+			  fontFamily: arr[i].fontFamily,
+			  fontStyle: arr[i].fontStyle,
+			  fill: arr[i].fontColor,
+			  textShadow:arr[i].textShadow,
+			  textAlign:arr[i].textAlign,
+			  textBackgroundColor:arr[i].backgroundColor,
+			  strokeWidth:arr[i].strokeWidth,
+			  strokeStyle: arr[i].strokeStyle,
 			  angle: arr[i].angle,
 			  href: arr[i].href,
-			  zindex:arr[i].zindex
+			  zindex:arr[i].zindex,
+			  running:arr[i].running,
+			  val:parseInt(arr[i].text)
 			});	
-			newview.hasControls=false;
-			newview.lockMovementX = true;
-			newview.lockMovementY = true;
-			canvas.add(newview);
-		}// end of arr[i].type=="SCView"		
+			newlabel.hasControls=false;
+			newlabel.lockMovementX = true;
+			newlabel.lockMovementY = true;
+			newlabel.set('top',newlabel.top+(arr[i].fontSize-5)*ratio);
+			canvas.add(newlabel);
+		}//end of arr[i].type=="SCLabel"
 	}
 }
 
@@ -207,6 +222,7 @@ function makeSCLabel(arr){
 		if(arr[i].type=="SCLabel"){			
 			var newlabel = new SCLabel(newtext,{
 			  id:arr[i].id,
+			  type:arr[i].type,
 			  left: calcLeft(arr[i].x,arr[i].width),
 			  top: calcTop(arr[i].y,arr[i].height)-arr[i].fontSize*ratio+5,
 			  opacity:parseFloat(arr[i].opacity),
@@ -231,6 +247,48 @@ function makeSCLabel(arr){
 		}//end of arr[i].type=="SCLabel"
 	}
 }
+
+function makeSCNumber(arr){
+	for(var i=0;i<arr.length;i++){
+		//SCNumberの描画
+		var newtext = arr[i].text;
+		if(arr[i].textwithline!=null){
+			newtext = arr[i].textwithline;
+		}
+		
+		if(arr[i].type=="SCNumber"){			
+			var newlabel = new SCNumber(newtext,{
+			  id:arr[i].id,
+			  type:arr[i].type,
+			  left: calcLeft(arr[i].x,arr[i].width),
+			  top: calcTop(arr[i].y,arr[i].height)-arr[i].fontSize*ratio+5,
+			  opacity:parseFloat(arr[i].opacity),
+			  fontSize: arr[i].fontSize*ratio,
+			  fontFamily: arr[i].fontFamily,
+			  fontStyle: arr[i].fontStyle,
+			  fill: arr[i].fontColor,
+			  textShadow:arr[i].textShadow,
+			  textAlign:arr[i].textAlign,
+			  textBackgroundColor:arr[i].backgroundColor,
+			  strokeWidth:arr[i].strokeWidth,
+			  strokeStyle: arr[i].strokeStyle,
+			  angle: arr[i].angle,
+			  href: arr[i].href,
+			  zindex:arr[i].zindex,
+			  min:arr[i].min,
+			  max:arr[i].max,
+			  step:arr[i].step,
+			  val:parseInt(arr[i].text)
+			});	
+			newlabel.hasControls=false;
+			newlabel.lockMovementX = true;
+			newlabel.lockMovementY = true;
+			newlabel.set('top',newlabel.top+(arr[i].fontSize-5)*ratio);
+			canvas.add(newlabel);
+		}//end of arr[i].type=="SCLabel"
+	}
+}
+
 
 //ロード終了まで待ってからSCImageViewを描画
 function makeSCImageView(oriarr,arr, callBack){
@@ -320,7 +378,6 @@ $("#EventCatcher").mousedown(function(event){
 		  	if(event.pageX*ratio>objarr[i].left-objarr[i].width/2 && event.pageX*ratio<objarr[i].left+objarr[i].width/2 && event.pageY*ratio>objarr[i].top-objarr[i].height/2 && event.pageY*ratio<objarr[i].top+objarr[i].height/2 && didLaunch==0){   
 		  		SelectedEvent(objarr[i]);
 			}				  	
-			console.log(event.pageX+"+"+objarr[i].left+"+"+objarr[i].width);
 		}
 		
 	}
@@ -374,6 +431,12 @@ function startAnimation(aniid){
 			currentpid=parseInt(ani.value);
 	  	makePage(); 
 	} 
+	console.log(aniid+"+"+ani.element+"+"+ani.value);
+	if(ani.element=="number"){
+		 if(obj.type=="SCNumber"){
+			 obj.update(ani.value);
+		 }
+	}
 
 	if(ani.element!="angle" && ani.element!="opacity"){
 		if(ani.value.substring(0, 1)!='='){
@@ -472,6 +535,15 @@ function timer()
 {
 	var arr=animationData.slice(0);
 
+  //タイマー処理
+	var objarr=canvas._objects;
+	for(var i=0;i<objarr.length;i++){
+		if(objarr[i].type=="SCTimer" && objarr[i].running==1){
+			objarr[i].val += 0.6;
+			objarr[i].update();
+		}
+	}
+
 	//アニメーションのレンダリング
 	if(animationing==1){
 		canvas.renderAll();
@@ -481,6 +553,12 @@ function timer()
 	for(var i=0;i<arr.length;i++){
 		var trigger=arr[i].trigger;
 		var trgarr=trigger.split(":");
+		if(trgarr[0]=="number" && trgarr[1]==">" && getObjectById(trgarr[3]).val > parseInt(trgarr[2])){
+				startAnimation(arr[i].aniid);
+		}
+		if(trgarr[0]=="timer" && trgarr[1]==">" && getObjectById(trgarr[3]).val > (parseInt(trgarr[2])/1000)*60){
+				startAnimation(arr[i].aniid);
+		}
 		if(animationStatus[arr[i].aniid]==0){
 			//アニメーション終了判定
 			if(trgarr[0]=="ended" && animationStatus[trgarr[1]]==2){
@@ -636,13 +714,15 @@ function isArray(what) {
 function randomFilter(arr){
 	 var arrstr=JSON.stringify(arr);
 	 var tmpstr=JSON.stringify(arr);
-	 var qualityRegex = /"rand\([0-9,]*\)"/g,matches;
+	 var qualityRegex = /rand\([0-9,]*\)/g,matches;
 		while (matches = qualityRegex.exec(tmpstr)) {
-		console.log(matches[0]);
 			var reg = /[0-9]+,[0-9]+,[0-9]+/g
 			randstr = reg.exec(matches[0]);
 			randarr = randstr[0].split(",");
-			value = Math.floor((Math.random()*randarr[1])+randarr[0]);
+			begin = parseInt(randarr[0]);
+			end = parseInt(randarr[1]);
+			step = parseInt(randarr[2]);
+			value = Math.floor((Math.random()*(end-begin))/step)*step+begin;
 			arrstr = arrstr.replace(matches[0],value);
 		}
 	 return JSON.parse(arrstr);
@@ -684,21 +764,41 @@ var SCLabel = fabric.util.createClass(fabric.Text, {
 	}
 });
 
-var SCNumber = fabric.util.createClass({
-	 initialize: function(begin,step) {
-	    this.begin = begin || 0;
-	    this.step = step || 1;
-	 },
-	 toString: function() {
-	    return this.begin + '/' + this.step;
+var SCNumber = fabric.util.createClass(SCLabel,{
+	initialize: function(element,options){
+		this.callSuper('initialize',element,options);
+	    this.set('min', options.min || 0);
+	    this.set('max', options.max || 100000);
+	    this.set('step', options.step || 1);
+	    this.set('val', options.val || 0);
+	},
+	 update: function(value) {
+	    this.val += parseInt(value);
+	    this.text = this.val.toString();
 	 }
 });
 
-var SCTimer = fabric.util.createClass({
-	 initialize: function(begin,step) {
-	    this.begin = begin || 0;
-	    this.step = step || 1;
-	    this.running = running || 0;
+var SCTimer = fabric.util.createClass(SCLabel,{
+	initialize: function(element,options){
+		this.callSuper('initialize',element,options);
+	    this.set('running', options.running || 0);
+	    this.set('val', options.val || 0);
+	},
+	 update: function() {
+	    value = parseInt(this.val);
+	    minute = Math.floor(value/(60*60));
+	    second = Math.floor((value-minute*60*60)/60);
+	    msecond = Math.floor((value-minute*60*60-second*60));
+	    minutestr = minute.toString();
+	    secondstr = second.toString();
+	    msecondstr = msecond.toString();
+	    if(msecond<10) msecondstr = "0"+ msecondstr;
+	    if(second<10) secondstr = "0"+ secondstr;
+	    if(minute<10) minute = "0"+ minutestr;
+
+	    timerstr = minutestr+":"+secondstr+":"+ msecondstr;
+	    this.text = timerstr;
+	    canvas.renderAll();
 	 }
 });
 
