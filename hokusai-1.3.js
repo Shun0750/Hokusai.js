@@ -461,6 +461,7 @@ function startAnimation(aniid){
 		onComplete: function() {
 			canvas.renderAll();
 			animationing=0;
+			console.log("end"+ani.aniid+"+"+ani.element);
 			animationStatus[ani.aniid]=2;
 			if(ani.repeat>0){
 				var tmpani=JSON.parse(JSON.stringify(ani)); //aniの中身をコピー
@@ -565,7 +566,7 @@ function timer()
 				startAnimation(arr[i].aniid);
 			}
 			//アニメーションスタート判定
-			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1){
+			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1 && animationStatus[arr[i].target]==0){
 				startAnimation(arr[i].aniid);
 			}
 			//当たり判定
