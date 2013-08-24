@@ -17,10 +17,12 @@ var ratio = 1;
 var retina = window.devicePixelRatio > 1;  //Retinaのときにtrue Retinaでないときにfalse
 var didLaunch = 0;
 var animationing=0;
+var loaderEvent = "";
+
 
 //初期化メソッド============================================================================================================================================
 
-url = 'dev2.json';
+url = 'dev3.json';
 
 function preloadImage(){
 //console.log(preloadedImages);
@@ -84,6 +86,7 @@ $.getJSON(url, function(data){
 });
 
 function initApp(){
+	clicking=0;
 	canvas.selection = false; //グループ選択を解除
 	setInterval(function(){timer()},10); //タイマー関数の発動
 
@@ -99,16 +102,23 @@ function initApp(){
 	        viewportmeta.content = 'width=device-width, minimum-scale=0.5, maximum-scale=0.5, initial-scale=0.5';
 	    }
 	}
+
+	w = $(document).width()/2 - $(".spinner").width()/2;
+	console.log(w);
+	$("#loader").css("left",$(document).width()/2 - $(".spinner").width()/2);
+	$("#loader").css("top",$(document).height()/2 - $(".spinner").height()/2);
+	$("#loader").css("visibility","visible");
 }
 
 //ページを描画
 function makePage(){
 	animationStatus = new Array();
 	animationData = new Array();
+	animationing = 0;
 	for(var i=0;i<objectData.length;i++){
 		if(objectData[i].pid==currentpid){
 		  	if(objectData[i].animation.length>0){
-		  		animationData=randomFilter(objectData[i]).animation.slice(0)
+		  		animationData=randomFilter(objectData[i]).animation.slice(0);
 		  	}
 		  	canvas.setHeight(objectData[i].height*ratio);
 		  	canvas.setWidth(objectData[i].width*ratio);
@@ -130,11 +140,31 @@ function makePage(){
 
 function makeObjects(arr){
 	canvas.clear();
-    SCimageview=[];
+    var SCimageview=[];
+    $("#loader").css("visibility","visible");
 	//それぞれのオブジェクト配列の生成
 	for(var i=0;i<arr.length;i++){
 		if(arr[i].type=="SCImageView"){
 			SCimageview.push(arr[i]);
+		}
+	}
+	console.log(SCimageview.length);
+	if(SCimageview.length>0){
+		loaderEvent = "SCImageView";
+	}else{
+		for(var i=0;i<arr.length;i++){
+			if(arr[i].type=="SCView"){
+				loaderEvent = "SCView";
+			}
+			if(arr[i].type=="SCLabel"){
+				loaderEvent = "SCLabel";
+			}
+			if(arr[i].type=="SCTimer"){
+				loaderEvent = "SCTimer";
+			}
+			if(arr[i].type=="SCNumber"){
+				loaderEvent = "SCNumber";
+			}
 		}
 	}
 		makeSCImageView( arr,SCimageview, imageLoaded );
@@ -169,6 +199,10 @@ function makeSCView(arr){
 			canvas.add(newview);
 		}// end of arr[i].type=="SCView"		
 	}
+	if(loaderEvent == "SCView"){
+		$("#loader").css("visibility","hidden");
+		addedEvent();
+	}
 }
 
 
@@ -200,7 +234,9 @@ function makeSCTimer(arr){
 			  href: arr[i].href,
 			  zindex:arr[i].zindex,
 			  running:arr[i].running,
-			  val:parseInt(arr[i].text)
+			  val:parseInt(arr[i].text),
+			  originX: arr[i].originX,
+			  originY: arr[i].originY
 			});	
 			newlabel.hasControls=false;
 			newlabel.lockMovementX = true;
@@ -208,6 +244,10 @@ function makeSCTimer(arr){
 			newlabel.set('top',newlabel.top+(arr[i].fontSize-5)*ratio);
 			canvas.add(newlabel);
 		}//end of arr[i].type=="SCLabel"
+	}
+	if(loaderEvent == "SCTimer"){
+		$("#loader").css("visibility","hidden");
+		addedEvent();
 	}
 }
 
@@ -245,6 +285,10 @@ function makeSCLabel(arr){
 			newlabel.set('top',newlabel.top+(arr[i].fontSize-5)*ratio);
 			canvas.add(newlabel);
 		}//end of arr[i].type=="SCLabel"
+	}
+	if(loaderEvent == "SCLabel"){
+		$("#loader").css("visibility","hidden");
+		addedEvent();
 	}
 }
 
@@ -286,6 +330,10 @@ function makeSCNumber(arr){
 			newlabel.set('top',newlabel.top+(arr[i].fontSize-5)*ratio);
 			canvas.add(newlabel);
 		}//end of arr[i].type=="SCLabel"
+	}
+	if(loaderEvent == "SCNumber"){
+		$("#loader").css("visibility","hidden");
+		addedEvent();
 	}
 }
 
@@ -329,7 +377,13 @@ function imageLoaded(img,arr,oriarr){
 		newimageview.lockMovementX = true;
 		newimageview.lockMovementY = true;
 		canvas.add(newimageview);
+
 	}
+	if(loaderEvent == "SCImageView"){
+		$("#loader").css("visibility","hidden");
+		addedEvent();
+	}
+	console.log(loaderEvent);
 	setLayers();
 	preloadImage();
 }
@@ -337,13 +391,19 @@ function imageLoaded(img,arr,oriarr){
 //イベント=========================================================================================================================================
 //イベントキャッチ========================================================================================================================
 //追加時
-canvas.on('object:added', function(e) {
+function addedEvent(){
   //アニメーション
-  var obj = e.target;
-  if(getAniidByAddedId(obj.id)!=null){
-	  startAnimation(getAniidByAddedId(obj.id));
-  }
-});
+
+  	var arr=animationData;
+	for(var i=0;i<arr.length;i++){
+		var trigger=arr[i].trigger;
+		console.log(trigger);
+		var trgarr=trigger.split(":");
+		if(trgarr[0]=="added"){
+			startAnimation(arr[i].aniid);
+		}
+	}
+}
 
 //タッチイベントのキャッチ
 $(document).ready(function(){
@@ -465,7 +525,7 @@ function startAnimation(aniid){
 			if(ani.repeat>0){
 				var tmpani=JSON.parse(JSON.stringify(ani)); //aniの中身をコピー
 				tmpani.repeat=ani.repeat*2-1;
-				animationStatus[ani.aniid]=1;
+				//animationStatus[ani.aniid]=1;
 				repeatAnimation(obj,tmpani,selem,sval);
 			}
 		},
@@ -475,16 +535,12 @@ function startAnimation(aniid){
 }
 
 function repeatAnimation(obj,ani,selem,sval){
- 	if(ani.element == "angle") console.log("beforeval"+sval);
 	if(ani.value.substring(0, 1)!='='){
 		//値を直接指定のとき
-		var ssval=obj[selem];  //戻り先
-		console.log("========="+ani.element);
-		console.log(ssval);
-	//	if(ani.element=="left"){ssval+=obj.width/(2*ratio);}
-	//	if(ani.element=="top"){ssval+=obj.height/(2*ratio);}
-	//	if(ani.element!="angle" && ani.element!="opacity"){sval=sval*ratio}
-		console.log(ssval);
+		var ssval=obj[selem];
+		if(ani.element=="left"){ssvalue+=obj.width/(2*ratio);}
+		if(ani.element=="top"){ssvalue+=obj.height/(2*ratio);}
+		if(ani.element!="angle" && ani.element!="opacity"){sval=sval*ratio}
 		obj.animate(selem, sval, {
 			onChange: function(value) {
   				if(animationing==0)animationing=1;
@@ -494,7 +550,6 @@ function repeatAnimation(obj,ani,selem,sval){
 				animationing=0;
 				ani.value=ssval.toString();
 				ani.repeat-=1;
-				console.log(obj[selem]);
 				if(ani.repeat>0)repeatAnimation(obj,ani,selem,ssval);
 			},
 			easing: fabric.util.ease[ani.easing],
@@ -515,10 +570,9 @@ function repeatAnimation(obj,ani,selem,sval){
 			nextval+='=-';
 			var tmpvalue=ani.value.substring(2);
 			if(ani.element!="angle" && ani.element!="opacity"){tmpvalue=tmpvalue*ratio;}
-			newval+=tmpvalue;
+			newval+=tmpvalue;		
 		}
 		nextval+=ani.value.substring(2);
-		if(ani.element == "angle") console.log("newval"+newval);
 		obj.animate(ani.element, newval, {
 			//アニメーション終了後はanimationStatusを2に
 			onChange: function(value) {
@@ -529,11 +583,7 @@ function repeatAnimation(obj,ani,selem,sval){
 				animationing=0;
 				ani.value=nextval;
 				ani.repeat-=1;
-				animationStatus[ani.aniid]=2;
-				if(ani.repeat>0){
-					animationStatus[ani.aniid]=1;
-					repeatAnimation(obj,ani,selem,nextval);
-				}
+				if(ani.repeat>0)repeatAnimation(obj,ani,selem,nextval);
 			},
 			easing: fabric.util.ease[ani.easing],
 			duration: ani.duration
@@ -547,13 +597,13 @@ function timer()
 	var arr=animationData.slice(0);
 
   //タイマー処理
-	var objarr=canvas._objects;
+	/*var objarr=canvas._objects;
 	for(var i=0;i<objarr.length;i++){
 		if(objarr[i].type=="SCTimer" && objarr[i].running==1){
 			objarr[i].val += 0.6;
 			objarr[i].update();
 		}
-	}
+	}*/
 
 	//アニメーションのレンダリング
 	if(animationing==1){
@@ -564,19 +614,21 @@ function timer()
 	for(var i=0;i<arr.length;i++){
 		var trigger=arr[i].trigger;
 		var trgarr=trigger.split(":");
-		if(trgarr[0]=="number" && trgarr[1]==">" && getObjectById(trgarr[3]).val > parseInt(trgarr[2])){
+		/*if(trgarr[0]=="number" && trgarr[1]==">" && getObjectById(trgarr[3]).val > parseInt(trgarr[2])){
 				startAnimation(arr[i].aniid);
 		}
 		if(trgarr[0]=="timer" && trgarr[1]==">" && getObjectById(trgarr[3]).val > (parseInt(trgarr[2])/1000)*60){
 				startAnimation(arr[i].aniid);
-		}
+		}*/
 		if(animationStatus[arr[i].aniid]==0){
 			//アニメーション終了判定
 			if(trgarr[0]=="ended" && animationStatus[trgarr[1]]==2){
+				console.log("EEEEEEEENDED");
 				startAnimation(arr[i].aniid);
 			}
 			//アニメーションスタート判定
 			if(trgarr[0]=="sync" && animationStatus[trgarr[1]]==1){
+				console.log("SSSSSSSSSSYNC");
 				startAnimation(arr[i].aniid);
 			}
 			//当たり判定
