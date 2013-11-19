@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+  <meta name="description" content="" />
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <title></title>
+  <link rel="apple-touch-icon" href="">
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-41541384-1', 'smartcanvas.net');
+      ga('send', 'pageview');
+  </script>
+</head>
+<body style="margin:0px; text-align:center;overflow:hidden;">
+<script type="text/javascript">
+var gid = location.search.split('=')[1];
+var url = "http://appdata.smartcanvas.net/abtests/group" + gid + "/rates.json";
+
+//JSON読み込み
+$.getJSON(url, function(data){
+  var sum = 0;
+  for (i=0;i<data.length;i++){
+    sum += data[i].display_rate;
+  }
+  console.log("sum"+sum);
+  var val = Math.floor((Math.random()*sum)+1);
+  var added = 0;
+  for (i=0;i<data.length;i++){
+    if (added < val && val <= added + data[i].display_rate){
+      location.href = "http://appdata.smartcanvas.net/?user="+data[i].user_id+"&app="+data[i].app_id+"&group="+gid;
+    }
+    added += data[i].display_rate;
+  }
+  
+});
+
+
+</script>
+</body>
+</html>

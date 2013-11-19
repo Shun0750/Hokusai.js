@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+  <meta name="description" content="" />
+  <title></title>
+  <link rel="apple-touch-icon" href="">
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-41541384-1', 'smartcanvas.net');
+      ga('send', 'pageview');
+  </script>
+</head>
+<body style="margin:0px; text-align:center;overflow:hidden;">
+	<canvas id="canvasspace" width="320" height="480" style="-webkit-transition: -webkit-transform 1.0s ease-in-out;"></canvas>
+	<div id="EventCatcher" style="position:absolute;left:0;top:0;width:320px; height:900px;"></div>
+  <div id="loader" style="position:absolute;left:0;top:0;visibility:hidden;width:100%"></div>
+<script type="text/javascript" src="http://appdata.smartcanvas.net/js/all.min.js"></script>
+<script type="text/javascript">
+var params = location.search.split('&');
+var uid = params[0].split('=')[1];
+var aid = params[1].split('=')[1];
+if (!uid) { uid = 21; aid = 331;}
+if (!aid) { uid = 21; aid = 331;}
+var url = "http://appdata.smartcanvas.net/appdata/user" + uid + "/apps" + aid + "/json/dev.json";
+</script>
+<script type="text/javascript" src="http://appdata.smartcanvas.net/hokusai-1.4.js"></script>
+<script type="text/javascript" src="http://appdata.smartcanvas.net/js/spin.min.js"></script>
+<script type="text/javascript">
+window.addEventListener("load", function(){
+  setTimeout(function(){
+    scrollTo(0,0);
+  },100);
+},false);
+var opts = {
+  lines: 11, // The number of lines to draw
+  length: 12, // The length of each line
+  width: 5, // The line thickness
+  radius: 15, // The radius of the inner circle
+  corners: 1, // Corner roundness (0..1)
+  rotate: 0, // The rotation offset
+  direction: 1, // 1: clockwise, -1: counterclockwise
+  color: '#000', // #rgb or #rrggbb or array of colors
+  speed: 1, // Rounds per second
+  trail: 51, // Afterglow percentage
+  shadow: false, // Whether to render a shadow
+  hwaccel: false, // Whether to use hardware acceleration
+  className: 'spinner', // The CSS class to assign to the spinner
+  zIndex: 2e9, // The z-index (defaults to 2000000000)
+  top: '0', // Top position relative to parent in px
+  left: '0' // Left position relative to parent in px
+};
+var target = document.getElementById('loader');
+var spinner = new Spinner(opts).spin(target);
+</script>
+</body>
+</html>
